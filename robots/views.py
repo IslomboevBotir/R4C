@@ -14,8 +14,6 @@ class RobotsView(View):
             model = data.get("model")
             version = data.get("version")
             created = data.get("created")
-            if Robot.objects.filter(model=model, version=version).exists():
-                raise ValidationError(f"Model {model} with {version} version already exist.")
             robot = Robot(model=model, version=version, created=created)
             robot.save()
 
