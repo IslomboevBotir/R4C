@@ -2,7 +2,7 @@ import json
 
 from django.http import JsonResponse
 from django.views import View
-from django.core.exceptions import ValidationError
+
 
 from robots.models import Robot
 
