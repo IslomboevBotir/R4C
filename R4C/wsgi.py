@@ -1,5 +1,5 @@
 """
-WSGI config for R4C project.
+WSGI config for R4C R4C.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
