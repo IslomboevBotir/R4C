@@ -1,0 +1,63 @@
+services:
+  api:
+    build:
+      dockerfile: Dockerfiles/api/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - rabbit-mq
+    ports:
+      - "8000:8000"
+    command: >
+      bash -c "
+        sleep 10 && 
+        python manage.py migrate && 
+        python manage.py collectstatic --noinput && 
+        gunicorn R4C.wsgi:application --bind 0.0.0.0:8000
+      "
+
+  postgres:
+    image: "postgres:latest"
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $POSTGRES_USER -p 5432" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  rabbit-mq:
+    image: rabbitmq:management
+    restart: always
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmqctl status" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfiles/celery/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - rabbit-mq
+      - postgres
+    command: celery -A R4C.celery:app worker --loglevel=info -Q high-load
+
